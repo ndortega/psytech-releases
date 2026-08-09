@@ -3,7 +3,7 @@
 set -e
 
 REPO="ndortega/psytech-releases"
-INSTALL_DIR="/usr/local/bin"
+INSTALL_DIR="$HOME/Downloads"
 BINARY_NAME="PsyTech"
 TMP_DIR="$(mktemp -d)"
 DEST="${INSTALL_DIR}/${BINARY_NAME}"
@@ -76,15 +76,14 @@ if [ "$PLATFORM" = "osx" ]; then
   codesign --sign - --force --deep "$TMP_DIR/$ASSET_NAME" 2>/dev/null || true
 fi
 
-echo "Installing to $DEST (requires sudo)"
+echo "Installing to $DEST"
 
 # Remove older executable before installing
 if [ -f "$DEST" ]; then
   echo "Removing old executable: $DEST"
-  sudo rm -f "$DEST"
+  rm -f "$DEST"
 fi
 
-sudo mv "$TMP_DIR/$ASSET_NAME" "$DEST"
+mv "$TMP_DIR/$ASSET_NAME" "$DEST"
 
-echo "Installed successfully: $(command -v $BINARY_NAME)"
-$BINARY_NAME --version || true
+echo "Installed successfully to $DEST"

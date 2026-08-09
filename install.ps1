@@ -7,7 +7,7 @@ if (-not $Version -and $args.Count -gt 0) {
 $ErrorActionPreference = 'Stop'
 
 $REPO = "ndortega/psytech-releases"
-$INSTALL_DIR = "$env:ProgramFiles\PsyTech"
+$INSTALL_DIR = "$env:USERPROFILE\Downloads"
 $BINARY_NAME = "PsyTech.exe"
 $TMP_DIR = Join-Path $env:TEMP "psytech_tmp"
 $DEST = "$INSTALL_DIR\$BINARY_NAME"
@@ -51,9 +51,6 @@ try {
     throw "Error: failed to download $ASSET_NAME for version $VERSION. It may not exist for this release."
 }
 
-# Create install directory if it doesn't exist
-if (!(Test-Path $INSTALL_DIR)) { New-Item -ItemType Directory -Path $INSTALL_DIR | Out-Null }
-
 # Remove older executable before installing
 if (Test-Path $DEST) {
     Remove-Item $DEST -Force
@@ -62,16 +59,4 @@ if (Test-Path $DEST) {
 
 Copy-Item "$TMP_DIR\$ASSET_NAME" $DEST -Force
 
-# Add install dir to PATH for current session
-$env:PATH = "$INSTALL_DIR;" + $env:PATH
-# Persist install dir to user PATH
-$currentUserPath = [Environment]::GetEnvironmentVariable("Path", "User")
-if ($currentUserPath -notlike "*$INSTALL_DIR*") {
-    [Environment]::SetEnvironmentVariable("Path", "$INSTALL_DIR;" + $currentUserPath, "User")
-    Write-Host "Added $INSTALL_DIR to user PATH. You may need to restart your shell for changes to take effect."
-}
-
-# Show version
-& $DEST --version
-
-Write-Host "Installed successfully: $DEST"
+Write-Host "Installed successfully to: $DEST"

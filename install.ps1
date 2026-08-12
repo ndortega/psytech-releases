@@ -1,16 +1,27 @@
 # Requires PowerShell 5+
-# Accept version from argument
+# Manual install: `irm <url> | iex` or `install.ps1 [version]` → installs the latest (or given)
+# version to the default location ($USERPROFILE\Downloads).
+# Self-update from the app: `install.ps1 <version> <install-dir> <app-pid>` → waits for the
+# running app to exit, replaces it in place, then relaunches it.
 if (-not $Version -and $args.Count -gt 0) {
     $Version = $args[0]
 }
+$InstallDir = $args[1]
+$WaitForPid = $args[2]
 
 $ErrorActionPreference = 'Stop'
 
 $REPO = "ndortega/psytech-releases"
-$INSTALL_DIR = "$env:USERPROFILE\Downloads"
+if (-not $InstallDir) { $InstallDir = "$env:USERPROFILE\Downloads" }
 $BINARY_NAME = "PsyTech.exe"
 $TMP_DIR = Join-Path $env:TEMP "psytech_tmp"
-$DEST = "$INSTALL_DIR\$BINARY_NAME"
+$DEST = Join-Path $InstallDir $BINARY_NAME
+
+# Self-update: the app is still running, so wait for it to exit before touching its binary.
+if ($WaitForPid) {
+    Write-Host "Waiting for PsyTech (PID $WaitForPid) to exit..."
+    Wait-Process -Id $WaitForPid -ErrorAction SilentlyContinue
+}
 
 if (Test-Path $TMP_DIR) { Remove-Item $TMP_DIR -Recurse -Force }
 New-Item -ItemType Directory -Path $TMP_DIR | Out-Null
@@ -60,3 +71,8 @@ if (Test-Path $DEST) {
 Copy-Item "$TMP_DIR\$ASSET_NAME" $DEST -Force
 
 Write-Host "Installed successfully to: $DEST"
+
+# Self-update: relaunch the freshly installed app.
+if ($WaitForPid) {
+    Start-Process $DEST
+}

@@ -3,10 +3,24 @@
 set -e
 
 REPO="ndortega/psytech-releases"
-INSTALL_DIR="$HOME/Downloads"
+VERSION="$1"
+INSTALL_DIR="$2"
+WAIT_PID="$3"
+
+if [ -z "$INSTALL_DIR" ]; then
+  INSTALL_DIR="$HOME/Downloads"
+fi
 BINARY_NAME="PsyTech"
 TMP_DIR="$(mktemp -d)"
 DEST="${INSTALL_DIR}/${BINARY_NAME}"
+
+# Self-update: the app is still running, so wait for it to exit before touching its binary.
+if [ -n "$WAIT_PID" ]; then
+  echo "Waiting for PsyTech (PID $WAIT_PID) to exit..."
+  while kill -0 "$WAIT_PID" 2>/dev/null; do
+    sleep 0.5
+  done
+fi
 
 # Detect OS
 OS="$(uname | tr '[:upper:]' '[:lower:]')"
@@ -87,3 +101,8 @@ fi
 mv "$TMP_DIR/$ASSET_NAME" "$DEST"
 
 echo "Installed successfully to $DEST"
+
+# Self-update: relaunch the freshly installed app.
+if [ -n "$WAIT_PID" ]; then
+  nohup "$DEST" >/dev/null 2>&1 &
+fi
